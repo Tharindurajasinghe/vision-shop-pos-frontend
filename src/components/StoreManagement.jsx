@@ -1,0 +1,340 @@
+import React, { useState, useEffect, useRef } from 'react';
+import api from '../services/api';
+import AddProduct from './AddProduct';
+import UpdateProduct from './UpdateProduct';
+import CategoryManagement from './CategoryManagement';
+
+const StoreManagement = () => {
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const searchTimeoutRef = useRef(null);
+
+  const [formData, setFormData] = useState({
+    productId: '',
+    name: '',
+    variant: '',
+    categoryId: '',
+    stock: '',
+    buyingPrice: '',
+    sellingPrice: ''
+  });
+
+  useEffect(() => {
+    loadProducts();
+    loadCategories();
+  }, []);
+
+  useEffect(() => {
+    filterProducts();
+  }, [selectedCategory, searchQuery, products]);
+
+  const loadProducts = async () => {
+    try {
+      const response = await api.getProducts();
+      setProducts(response.data);
+    } catch (error) {
+      console.error('Error loading products:', error);
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const response = await api.getCategories();
+      setCategories(response.data);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  };
+
+  const filterProducts = () => {
+    let filtered = products;
+
+    // Filter by category
+    if (selectedCategory) {
+      filtered = filtered.filter(p => p.categoryId === selectedCategory);
+    }
+
+    // Filter by search
+    if (searchQuery.trim()) {
+      filtered = filtered.filter(product =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.productId.includes(searchQuery) ||
+        (product.variant && product.variant.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+    }
+
+    setFilteredProducts(filtered);
+  };
+
+  const handleSearch = (value) => {
+    setSearchQuery(value);
+  };
+
+  const handleAddProduct = async () => {
+    try {
+      const response = await api.getNextProductId();
+      setFormData({
+        productId: response.data.productId,
+        name: '',
+        variant: '',
+        categoryId: '',
+        stock: '',
+        buyingPrice: '',
+        sellingPrice: ''
+      });
+      setShowAddModal(true);
+    } catch (error) {
+      alert('Error getting next product ID');
+    }
+  };
+
+  const handleSubmitAdd = async (e) => {
+    e.preventDefault();
+
+    if (!formData.name || !formData.categoryId || !formData.stock || !formData.buyingPrice || !formData.sellingPrice) {
+      alert('Please fill all required fields');
+      return;
+    }
+
+    try {
+      await api.addProduct({
+        productId: formData.productId,
+        name: formData.name,
+        variant: formData.variant || undefined, // Send undefined if empty (will default to 'Standard')
+        categoryId: formData.categoryId,
+        stock: parseInt(formData.stock),
+        buyingPrice: parseFloat(formData.buyingPrice),
+        sellingPrice: parseFloat(formData.sellingPrice)
+      });
+
+      alert('Product added successfully!');
+      setShowAddModal(false);
+      loadProducts();
+    } catch (error) {
+      alert(error.response?.data?.message || 'Error adding product');
+    }
+  };
+
+  const handleUpdateClick = (product) => {
+    setSelectedProduct(product);
+    setFormData({
+      productId: product.productId,
+      name: product.name,
+      variant: product.variant,
+      categoryId: product.categoryId,
+      stock: product.stock,
+      buyingPrice: product.buyingPrice,
+      sellingPrice: product.sellingPrice
+    });
+    setShowUpdateModal(true);
+  };
+
+  const handleSubmitUpdate = async (e) => {
+    e.preventDefault();
+
+    try {
+      await api.updateProduct(
+        formData.productId,
+        {
+          name: formData.name,
+          categoryId: formData.categoryId,
+          stock: parseInt(formData.stock),
+          buyingPrice: parseFloat(formData.buyingPrice),
+          sellingPrice: parseFloat(formData.sellingPrice)
+        },
+        formData.variant // Pass variant to API
+      );
+
+      alert('Product updated successfully!');
+      setShowUpdateModal(false);
+      loadProducts();
+    } catch (error) {
+      alert(error.response?.data?.message || 'Error updating product');
+    }
+  };
+
+  const handleDelete = async (productId, variant) => {
+    const variantText = variant && variant !== 'Standard' ? ` (${variant})` : '';
+    const confirm = window.confirm(`Are you sure you want to delete this product${variantText}?`);
+    if (!confirm) return;
+
+    try {
+      await api.deleteProduct(productId, variant);
+      alert('Product deleted successfully!');
+      loadProducts();
+    } catch (error) {
+      alert(error.response?.data?.message || 'Error deleting product');
+    }
+  };
+
+  const getCategoryName = (categoryId) => {
+    const category = categories.find(c => c.categoryId === categoryId);
+    return category ? category.name : 'Unknown';
+  };
+
+  // Get unique key for product
+  const getProductUniqueKey = (product) => {
+    return `${product.productId}_${product.variant || 'Standard'}`;
+  };
+
+  return (
+    <div className="bg-white p-6 rounded-lg shadow">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Store Management</h2>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowCategoryModal(true)}
+            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 font-semibold"
+          >
+            📁 Add/Remove Category
+          </button>
+          <button
+            onClick={handleAddProduct}
+            className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 font-semibold"
+          >
+            + Add New Product
+          </button>
+        </div>
+      </div>
+
+      {/* Category Filter */}
+      <div className="mb-4">
+        <label className="block text-gray-700 mb-2 font-semibold">Category</label>
+        <select
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className="w-64 px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+        >
+          <option value="">All Categories</option>
+          {categories.map(cat => (
+            <option key={cat.categoryId} value={cat.categoryId}>
+              {cat.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Search Bar */}
+      <div className="mb-6">
+        <input
+          type="text"
+          placeholder="Search by ID, Name, or Variant..."
+          value={searchQuery}
+          onChange={(e) => handleSearch(e.target.value)}
+          className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+        />
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="px-4 py-3 text-left">Item ID</th>
+              <th className="px-4 py-3 text-left">Category</th>
+              <th className="px-4 py-3 text-left">Item Name</th>
+              <th className="px-4 py-3 text-left">Variant</th>
+              <th className="px-4 py-3 text-left">In Stock</th>
+              <th className="px-4 py-3 text-left">Buying Price</th>
+              <th className="px-4 py-3 text-left">Selling Price</th>
+              <th className="px-4 py-3 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredProducts.map(product => (
+              <tr key={getProductUniqueKey(product)} className="border-b hover:bg-gray-50">
+                <td className="px-4 py-3 font-semibold">{product.productId}</td>
+                <td className="px-4 py-3">
+                  <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
+                    {getCategoryName(product.categoryId)}
+                  </span>
+                </td>
+                <td className="px-4 py-3">{product.name}</td>
+                <td className="px-4 py-3">
+                  <span className={`px-2 py-1 rounded text-sm ${
+                    product.variant && product.variant !== 'Standard'
+                      ? 'bg-purple-100 text-purple-800'
+                      : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {product.variant || 'Standard'}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <span className={`px-2 py-1 rounded ${
+                    product.stock < 10 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                  }`}>
+                    {product.stock}
+                  </span>
+                </td>
+                <td className="px-4 py-3">Rs. {product.buyingPrice.toFixed(2)}</td>
+                <td className="px-4 py-3 font-semibold">Rs. {product.sellingPrice.toFixed(2)}</td>
+                <td className="px-4 py-3">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleUpdateClick(product)}
+                      className="text-blue-600 hover:underline"
+                    >
+                      Update
+                    </button>
+                    <button
+                      onClick={() => handleDelete(product.productId, product.variant)}
+                      className="text-red-600 hover:underline"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {filteredProducts.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            No products found
+          </div>
+        )}
+      </div>
+
+      <div className="mt-4 text-sm text-gray-600">
+        <p>Total Products: {filteredProducts.length}</p>
+        <p className="text-xs mt-1">
+          💡 Tip: You can add multiple variants of the same product ID (e.g., Small, Large, XL)
+        </p>
+      </div>
+
+      <CategoryManagement
+        show={showCategoryModal}
+        onClose={() => setShowCategoryModal(false)}
+        onCategoryChange={() => {
+          loadCategories();
+          loadProducts();
+        }}
+      />
+
+      <AddProduct
+        showAddModal={showAddModal}
+        setShowAddModal={setShowAddModal}
+        formData={formData}
+        setFormData={setFormData}
+        handleSubmitAdd={handleSubmitAdd}
+      />
+
+      <UpdateProduct
+        showUpdateModal={showUpdateModal}
+        setShowUpdateModal={setShowUpdateModal}
+        formData={formData}
+        setFormData={setFormData}
+        handleSubmitUpdate={handleSubmitUpdate}
+      />
+    </div>
+  );
+};
+
+export default StoreManagement;
