@@ -55,13 +55,9 @@ const StoreManagement = () => {
 
   const filterProducts = () => {
     let filtered = products;
-
-    // Filter by category
     if (selectedCategory) {
       filtered = filtered.filter(p => p.categoryId === selectedCategory);
     }
-
-    // Filter by search
     if (searchQuery.trim()) {
       filtered = filtered.filter(product =>
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -69,12 +65,7 @@ const StoreManagement = () => {
         (product.variant && product.variant.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     }
-
     setFilteredProducts(filtered);
-  };
-
-  const handleSearch = (value) => {
-    setSearchQuery(value);
   };
 
   const handleAddProduct = async () => {
@@ -95,31 +86,9 @@ const StoreManagement = () => {
     }
   };
 
-  const handleSubmitAdd = async (e) => {
-    e.preventDefault();
-
-    if (!formData.name || !formData.categoryId || !formData.stock || !formData.buyingPrice || !formData.sellingPrice) {
-      alert('Please fill all required fields');
-      return;
-    }
-
-    try {
-      await api.addProduct({
-        productId: formData.productId,
-        name: formData.name,
-        variant: formData.variant || undefined, // Send undefined if empty (will default to 'Standard')
-        categoryId: formData.categoryId,
-        stock: parseInt(formData.stock),
-        buyingPrice: parseFloat(formData.buyingPrice),
-        sellingPrice: parseFloat(formData.sellingPrice)
-      });
-
-      alert('Product added successfully!');
-      setShowAddModal(false);
-      loadProducts();
-    } catch (error) {
-      alert(error.response?.data?.message || 'Error adding product');
-    }
+  // Called by AddProduct when products are added successfully
+  const handleProductAdded = () => {
+    loadProducts();
   };
 
   const handleUpdateClick = (product) => {
@@ -138,7 +107,6 @@ const StoreManagement = () => {
 
   const handleSubmitUpdate = async (e) => {
     e.preventDefault();
-
     try {
       await api.updateProduct(
         formData.productId,
@@ -149,9 +117,8 @@ const StoreManagement = () => {
           buyingPrice: parseFloat(formData.buyingPrice),
           sellingPrice: parseFloat(formData.sellingPrice)
         },
-        formData.variant // Pass variant to API
+        formData.variant
       );
-
       alert('Product updated successfully!');
       setShowUpdateModal(false);
       loadProducts();
@@ -162,9 +129,8 @@ const StoreManagement = () => {
 
   const handleDelete = async (productId, variant) => {
     const variantText = variant && variant !== 'Standard' ? ` (${variant})` : '';
-    const confirm = window.confirm(`Are you sure you want to delete this product${variantText}?`);
-    if (!confirm) return;
-
+    const confirmed = window.confirm(`Are you sure you want to delete this product${variantText}?`);
+    if (!confirmed) return;
     try {
       await api.deleteProduct(productId, variant);
       alert('Product deleted successfully!');
@@ -179,7 +145,6 @@ const StoreManagement = () => {
     return category ? category.name : 'Unknown';
   };
 
-  // Get unique key for product
   const getProductUniqueKey = (product) => {
     return `${product.productId}_${product.variant || 'Standard'}`;
   };
@@ -227,11 +192,12 @@ const StoreManagement = () => {
           type="text"
           placeholder="Search by ID, Name, or Variant..."
           value={searchQuery}
-          onChange={(e) => handleSearch(e.target.value)}
+          onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-500"
         />
       </div>
 
+      {/* Products Table */}
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-100">
@@ -278,13 +244,13 @@ const StoreManagement = () => {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleUpdateClick(product)}
-                      className="text-blue-600 hover:underline"
+                      className="text-blue-600 hover:underline text-sm"
                     >
                       Update
                     </button>
                     <button
                       onClick={() => handleDelete(product.productId, product.variant)}
-                      className="text-red-600 hover:underline"
+                      className="text-red-600 hover:underline text-sm"
                     >
                       Remove
                     </button>
@@ -296,17 +262,15 @@ const StoreManagement = () => {
         </table>
 
         {filteredProducts.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            No products found
-          </div>
+          <div className="text-center py-8 text-gray-500">No products found</div>
         )}
       </div>
 
-      <div className="mt-4 text-sm text-gray-600">
-        <p>Total Products: {filteredProducts.length}</p>
-        <p className="text-xs mt-1">
-          💡 Tip: You can add multiple variants of the same product ID (e.g., Small, Large, XL)
-        </p>
+      <div className="mt-4 text-sm text-gray-500">
+        Total: {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
+        <span className="ml-2 text-xs">
+          💡 Same product ID can have multiple variants (Small, Large, XL...)
+        </span>
       </div>
 
       <CategoryManagement
@@ -318,12 +282,13 @@ const StoreManagement = () => {
         }}
       />
 
+      {/* Updated AddProduct — uses onProductAdded instead of handleSubmitAdd */}
       <AddProduct
         showAddModal={showAddModal}
         setShowAddModal={setShowAddModal}
         formData={formData}
         setFormData={setFormData}
-        handleSubmitAdd={handleSubmitAdd}
+        onProductAdded={handleProductAdded}
       />
 
       <UpdateProduct

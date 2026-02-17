@@ -185,6 +185,7 @@ const CheckBill = () => {
                 <thead className="bg-gray-100">
                   <tr>
                     <th className="px-3 py-2 text-left">Item</th>
+                    <th className="px-3 py-2 text-left">Variant</th>
                     <th className="px-3 py-2 text-center">Qty</th>
                     <th className="px-3 py-2 text-right">Price</th>
                     <th className="px-3 py-2 text-right">Total</th>
@@ -196,6 +197,15 @@ const CheckBill = () => {
                       <td className="px-3 py-2">
                         <p className="font-semibold">{item.name}</p>
                         <p className="text-xs text-gray-600">ID: {item.productId}</p>
+                      </td>
+                      <td className="px-3 py-2">
+                        <span className={`px-2 py-1 rounded text-xs ${
+                          item.variant && item.variant !== 'Standard'
+                            ? 'bg-purple-100 text-purple-800'
+                            : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {item.variant || 'Standard'}
+                        </span>
                       </td>
                       <td className="px-3 py-2 text-center">{item.quantity}</td>
                       <td className="px-3 py-2 text-right">
