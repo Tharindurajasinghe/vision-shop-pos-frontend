@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import LoadingOverlay from './LoadingOverlay';
 
 /**
  * AddProduct Component
@@ -8,6 +9,7 @@ import api from '../services/api';
  */
 const AddProduct = ({ showAddModal, setShowAddModal, formData, setFormData, onProductAdded }) => {
   const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   // Variant rows — each row is one variant
   const [variantRows, setVariantRows] = useState([
@@ -77,6 +79,7 @@ const AddProduct = ({ showAddModal, setShowAddModal, formData, setFormData, onPr
       return;
     }
 
+    setLoading(true);
     try {
       for (const row of variantRows) {
         await api.addProduct({
@@ -96,6 +99,8 @@ const AddProduct = ({ showAddModal, setShowAddModal, formData, setFormData, onPr
       if (onProductAdded) onProductAdded();
     } catch (error) {
       alert(error.response?.data?.message || 'Error adding product');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -103,6 +108,7 @@ const AddProduct = ({ showAddModal, setShowAddModal, formData, setFormData, onPr
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      {loading && <LoadingOverlay message="Adding product..." />}
       <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
 
         {/* Header */}

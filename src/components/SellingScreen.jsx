@@ -49,6 +49,8 @@ const SellingScreen = ({ onEndDay }) => {
   const [cash, setCash]   = useState('');
   const [change, setChange] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [billLoading, setBillLoading] = useState(false);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
 
   // Product indexes (loaded once)
@@ -77,6 +79,8 @@ const SellingScreen = ({ onEndDay }) => {
         setProductsByIdMap(idGroupMap);
       } catch {
         alert('Products failed to load');
+      } finally {
+        setPageLoading(false);
       }
     })();
   }, []);
@@ -307,6 +311,7 @@ const SellingScreen = ({ onEndDay }) => {
     const doPrint = window.confirm(
       'Do you want to print the bill?\n\nYes - Print and Save\nNo - Save Only'
     );
+    setBillLoading(true);
     try {
       const res = await api.createBill(buildBillData(parseFloat(cash) || 0));
       if (doPrint) printBill(res.data);
@@ -314,17 +319,22 @@ const SellingScreen = ({ onEndDay }) => {
       clearCart();
     } catch (err) {
       alert(err.response?.data?.message || 'Error saving bill');
+    } finally {
+      setBillLoading(false);
     }
   };
 
   const handleSaveBillFromCash = async (cashNum) => {
     if (cartItems.length === 0) return;
+    setBillLoading(true);
     try {
       await api.createBill(buildBillData(cashNum));
       alert('Bill saved successfully!');
       clearCart();
     } catch (err) {
       alert(err.response?.data?.message || 'Error saving bill');
+    } finally {
+      setBillLoading(false);
     }
   };
 
@@ -361,7 +371,9 @@ const SellingScreen = ({ onEndDay }) => {
 
   return (
     <div>
+      {pageLoading && <LoadingOverlay message="Loading products..." />}
       {loading && <LoadingOverlay message="Creating day-end summary..." />}
+      {billLoading && <LoadingOverlay message="Saving bill..." />}
 
       <div className="grid grid-cols-2 gap-6 mb-6">
 

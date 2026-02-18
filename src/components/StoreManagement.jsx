@@ -3,6 +3,7 @@ import api from '../services/api';
 import AddProduct from './AddProduct';
 import UpdateProduct from './UpdateProduct';
 import CategoryManagement from './CategoryManagement';
+import LoadingOverlay from './LoadingOverlay';
 
 const StoreManagement = () => {
   const [products, setProducts] = useState([]);
@@ -14,6 +15,8 @@ const StoreManagement = () => {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('');
   const searchTimeoutRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -69,6 +72,8 @@ const StoreManagement = () => {
   };
 
   const handleAddProduct = async () => {
+    setLoading(true);
+    setLoadingMessage('Loading...');
     try {
       const response = await api.getNextProductId();
       setFormData({
@@ -83,6 +88,8 @@ const StoreManagement = () => {
       setShowAddModal(true);
     } catch (error) {
       alert('Error getting next product ID');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -100,12 +107,16 @@ const StoreManagement = () => {
     const variantText = variant && variant !== 'Standard' ? ` (${variant})` : '';
     const confirmed = window.confirm(`Are you sure you want to delete this product${variantText}?`);
     if (!confirmed) return;
+    setLoading(true);
+    setLoadingMessage('Removing product...');
     try {
       await api.deleteProduct(productId, variant);
       alert('Product deleted successfully!');
       loadProducts();
     } catch (error) {
       alert(error.response?.data?.message || 'Error deleting product');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -120,6 +131,7 @@ const StoreManagement = () => {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow">
+      {loading && <LoadingOverlay message={loadingMessage} />}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Store Management</h2>
         <div className="flex gap-2">
