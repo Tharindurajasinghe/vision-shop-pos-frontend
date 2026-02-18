@@ -195,13 +195,25 @@ const SellingScreen = ({ onEndDay }) => {
     }));
   };
 
-  /** Change variant for a row — replaces product, keeps quantity */
+  /** Change variant for a row — replaces product, keeps quantity, checks stock */
   const changeVariant = (rowId, newVariantName) => {
     setCartItems(prev => prev.map(r => {
       if (r.rowId !== rowId) return r;
+      
       const newProductKey = `${r.product.productId}_${newVariantName}`;
       const newProduct = productIndex[newProductKey];
-      if (!newProduct) { alert('Variant not found'); return r; }
+      
+      if (!newProduct) {
+        alert('Variant not found');
+        return r;
+      }
+      
+      // Check if new variant has enough stock for current quantity
+      if (r.quantity > newProduct.stock) {
+        alert(`Variant "${newVariantName}" has insufficient stock! Available: ${newProduct.stock}. Current quantity: ${r.quantity}`);
+        return r; // Keep old variant
+      }
+      
       return {
         ...r,
         product    : newProduct,
@@ -219,14 +231,28 @@ const SellingScreen = ({ onEndDay }) => {
   // ── Search ─────────────────────────────────────────────────────────────────
 
   /**
-   * Type numeric ID → Enter → always adds first variant directly.
-   * Multi-variant products: adds first variant; user changes via dropdown in cart.
+   * Type numeric ID → Enter → adds first variant WITH STOCK.
+   * If all variants are out of stock, show error.
+   * If found, user can change variant via dropdown in cart.
    */
   const addByProductId = (value) => {
     const id       = value.padStart(3, '0');
     const variants = productsByIdMap[id];
-    if (!variants || variants.length === 0) { alert('Product ID not found'); return; }
-    addToCart(variants[0]); // always add first variant as a new row
+    
+    if (!variants || variants.length === 0) {
+      alert('Product ID not found');
+      return;
+    }
+
+    // Find first variant with stock > 0
+    const availableVariant = variants.find(v => v.stock > 0);
+    
+    if (!availableVariant) {
+      alert(`Product ${id} - All variants are out of stock`);
+      return;
+    }
+
+    addToCart(availableVariant);
   };
 
   const handleSearch = async (value) => {
