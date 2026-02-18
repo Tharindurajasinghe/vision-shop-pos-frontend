@@ -93,38 +93,7 @@ const StoreManagement = () => {
 
   const handleUpdateClick = (product) => {
     setSelectedProduct(product);
-    setFormData({
-      productId: product.productId,
-      name: product.name,
-      variant: product.variant,
-      categoryId: product.categoryId,
-      stock: product.stock,
-      buyingPrice: product.buyingPrice,
-      sellingPrice: product.sellingPrice
-    });
     setShowUpdateModal(true);
-  };
-
-  const handleSubmitUpdate = async (e) => {
-    e.preventDefault();
-    try {
-      await api.updateProduct(
-        formData.productId,
-        {
-          name: formData.name,
-          categoryId: formData.categoryId,
-          stock: parseInt(formData.stock),
-          buyingPrice: parseFloat(formData.buyingPrice),
-          sellingPrice: parseFloat(formData.sellingPrice)
-        },
-        formData.variant
-      );
-      alert('Product updated successfully!');
-      setShowUpdateModal(false);
-      loadProducts();
-    } catch (error) {
-      alert(error.response?.data?.message || 'Error updating product');
-    }
   };
 
   const handleDelete = async (productId, variant) => {
@@ -294,9 +263,8 @@ const StoreManagement = () => {
       <UpdateProduct
         showUpdateModal={showUpdateModal}
         setShowUpdateModal={setShowUpdateModal}
-        formData={formData}
-        setFormData={setFormData}
-        handleSubmitUpdate={handleSubmitUpdate}
+        productId={selectedProduct?.productId}
+        onProductUpdated={loadProducts}
       />
     </div>
   );

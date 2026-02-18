@@ -2,22 +2,16 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 
 const LowStockAlert = () => {
-  const [lowStockItems, setLowStockItems] = useState([]);
   const [allLowStockItems, setAllLowStockItems] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories]             = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading]                   = useState(true);
 
   useEffect(() => {
     loadData();
-    // Refresh every 30 seconds
     const interval = setInterval(loadData, 30000);
     return () => clearInterval(interval);
   }, []);
-
-  useEffect(() => {
-    filterByCategory();
-  }, [selectedCategory, allLowStockItems]);
 
   const loadData = async () => {
     try {
@@ -25,7 +19,6 @@ const LowStockAlert = () => {
         api.getProducts(),
         api.getCategories()
       ]);
-      
       const lowStock = productsRes.data.filter(product => product.stock <= 10);
       setAllLowStockItems(lowStock);
       setCategories(categoriesRes.data);
@@ -36,19 +29,15 @@ const LowStockAlert = () => {
     }
   };
 
-  const filterByCategory = () => {
-    if (selectedCategory) {
-      const filtered = allLowStockItems.filter(item => item.categoryId === selectedCategory);
-      setLowStockItems(filtered);
-    } else {
-      setLowStockItems(allLowStockItems);
-    }
-  };
-
   const getCategoryName = (categoryId) => {
     const category = categories.find(c => c.categoryId === categoryId);
     return category ? category.name : 'Unknown';
   };
+
+  // ── Filter directly at render time — no separate state, no stale closures ──
+  const displayedItems = selectedCategory
+    ? allLowStockItems.filter(item => item.categoryId === selectedCategory)
+    : allLowStockItems;
 
   if (loading) {
     return (
@@ -78,7 +67,7 @@ const LowStockAlert = () => {
           <h2 className="text-xl font-bold text-orange-600">Low Stock Alert</h2>
         </div>
         <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-semibold">
-          {lowStockItems.length} {lowStockItems.length === 1 ? 'item' : 'items'}
+          {displayedItems.length} {displayedItems.length === 1 ? 'item' : 'items'}
         </span>
       </div>
 
@@ -110,15 +99,16 @@ const LowStockAlert = () => {
               <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Item ID</th>
               <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Category</th>
               <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Item Name</th>
+              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Variant</th>
               <th className="px-4 py-2 text-right text-sm font-semibold text-gray-700">Available Quantity</th>
               <th className="px-4 py-2 text-center text-sm font-semibold text-gray-700">Status</th>
             </tr>
           </thead>
           <tbody>
-            {lowStockItems.length > 0 ? (
-              lowStockItems.map(item => (
-                <tr 
-                  key={item.productId} 
+            {displayedItems.length > 0 ? (
+              displayedItems.map(item => (
+                <tr
+                  key={`${item.productId}_${item.variant || 'Standard'}`}
                   className={`border-b hover:bg-gray-50 ${
                     item.stock === 0 ? 'bg-red-50' : item.stock <= 5 ? 'bg-orange-50' : ''
                   }`}
@@ -130,10 +120,19 @@ const LowStockAlert = () => {
                     </span>
                   </td>
                   <td className="px-4 py-3">{item.name}</td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-1 rounded text-xs ${
+                      item.variant && item.variant !== 'Standard'
+                        ? 'bg-purple-100 text-purple-800'
+                        : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {item.variant || 'Standard'}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-right">
                     <span className={`font-bold ${
-                      item.stock === 0 ? 'text-red-600' : 
-                      item.stock <= 5 ? 'text-orange-600' : 
+                      item.stock === 0 ? 'text-red-600' :
+                      item.stock <= 5 ? 'text-orange-600' :
                       'text-yellow-600'
                     }`}>
                       {item.stock}
@@ -158,7 +157,7 @@ const LowStockAlert = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="px-4 py-8 text-center text-gray-500">
+                <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
                   No low stock items in this category
                 </td>
               </tr>
@@ -170,7 +169,7 @@ const LowStockAlert = () => {
       <div className="mt-4 p-3 bg-orange-50 rounded border border-orange-200">
         <p className="text-sm text-orange-800">
           <span className="font-semibold">💡 Tip:</span> Please restock these items soon to avoid stockouts.
-          {selectedCategory && ` (Showing ${lowStockItems.length} of ${allLowStockItems.length} low stock items)`}
+          {selectedCategory && ` (Showing ${displayedItems.length} of ${allLowStockItems.length} low stock items)`}
         </p>
       </div>
     </div>

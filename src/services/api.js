@@ -49,22 +49,22 @@ class APIService {
 
   // ==================== AUTH ====================
   login(credentials) {
-    return this.axiosInstance.post(`${API_URL}/auth/login`, credentials);
+    return this.axiosInstance.post('/auth/login', credentials);
   }
 
   verifyPassword(data) {
-    return this.axiosInstance.post(`${API_URL}/auth/verify-password`, data);
+    return this.axiosInstance.post('/auth/verify-password', data);
   }
 
   // ==================== PRODUCTS ====================
-  
+
   /**
    * Get all products (with optional category filter)
    */
   getProducts(categoryId = null) {
-    const url = categoryId 
-      ? `${API_URL}/products?categoryId=${categoryId}` 
-      : `${API_URL}/products`;
+    const url = categoryId
+      ? `/products?categoryId=${categoryId}`
+      : '/products';
     return this.axiosInstance.get(url);
   }
 
@@ -72,7 +72,7 @@ class APIService {
    * Get product by ID (returns single product or all variants)
    */
   getProduct(id) {
-    return this.axiosInstance.get(`${API_URL}/products/${id}`);
+    return this.axiosInstance.get(`/products/${id}`);
   }
 
   /**
@@ -81,28 +81,28 @@ class APIService {
    * @param {string} variant - Variant name (e.g., 'Small', 'Large')
    */
   getProductVariant(id, variant) {
-    return this.axiosInstance.get(`${API_URL}/products/${id}?variant=${variant}`);
+    return this.axiosInstance.get(`/products/${id}?variant=${variant}`);
   }
 
   /**
    * Get all variants of a product
    */
   getProductVariants(id) {
-    return this.axiosInstance.get(`${API_URL}/products/${id}/variants`);
+    return this.axiosInstance.get(`/products/${id}/variants`);
   }
 
   /**
    * Search products by name
    */
   searchProducts(query) {
-    return this.axiosInstance.get(`${API_URL}/products/search?query=${query}`);
+    return this.axiosInstance.get(`/products/search?query=${query}`);
   }
 
   /**
    * Get next available product ID
    */
   getNextProductId() {
-    return this.axiosInstance.get(`${API_URL}/products/next-id`);
+    return this.axiosInstance.get('/products/next-id');
   }
 
   /**
@@ -110,7 +110,7 @@ class APIService {
    * @param {Object} product - Product data with optional variant field
    */
   addProduct(product) {
-    return this.axiosInstance.post(`${API_URL}/products`, product);
+    return this.axiosInstance.post('/products', product);
   }
 
   /**
@@ -120,9 +120,9 @@ class APIService {
    * @param {string} variant - Variant name (optional, defaults to 'Standard')
    */
   updateProduct(id, product, variant = null) {
-    const url = variant 
-      ? `${API_URL}/products/${id}?variant=${variant}` 
-      : `${API_URL}/products/${id}`;
+    const url = variant
+      ? `/products/${id}?variant=${variant}`
+      : `/products/${id}`;
     return this.axiosInstance.put(url, product);
   }
 
@@ -132,76 +132,76 @@ class APIService {
    * @param {string} variant - Variant name (optional, defaults to 'Standard')
    */
   deleteProduct(id, variant = null) {
-    const url = variant 
-      ? `${API_URL}/products/${id}?variant=${variant}` 
-      : `${API_URL}/products/${id}`;
+    const url = variant
+      ? `/products/${id}?variant=${variant}`
+      : `/products/${id}`;
     return this.axiosInstance.delete(url);
   }
 
   // ==================== BILLS ====================
-  
+
   /**
    * Create new bill (with variant and optional price editing)
    * @param {Object} billData - Bill data including items with variant and optional price
    */
   createBill(billData) {
-    return this.axiosInstance.post(`${API_URL}/bills`, billData);
+    return this.axiosInstance.post('/bills', billData);
   }
 
   getTodayBills() {
-    return this.axiosInstance.get(`${API_URL}/bills/today`);
+    return this.axiosInstance.get('/bills/today');
   }
 
   getBillsByDate(date) {
-    return this.axiosInstance.get(`${API_URL}/bills/date/${date}`);
+    return this.axiosInstance.get(`/bills/date/${date}`);
   }
 
   getBill(billId) {
-    return this.axiosInstance.get(`${API_URL}/bills/${billId}`);
+    return this.axiosInstance.get(`/bills/${billId}`);
   }
 
   getPast30DaysBills() {
-    return this.axiosInstance.get(`${API_URL}/bills/history/past30days`);
+    return this.axiosInstance.get('/bills/history/past30days');
   }
 
   deleteBill(billId) {
-    return this.axiosInstance.delete(`${API_URL}/bills/${billId}`);
+    return this.axiosInstance.delete(`/bills/${billId}`);
   }
 
   // ==================== DAY ====================
-  
+
   getCurrentDaySummary() {
-    return this.axiosInstance.get(`${API_URL}/day/current`);
+    return this.axiosInstance.get('/day/current');
   }
 
   endDay() {
-    return this.axiosInstance.post(`${API_URL}/day/end`);
+    return this.axiosInstance.post('/day/end');
   }
 
   // ==================== SUMMARY ====================
-  
+
   getDailySummary(date) {
-    return this.axiosInstance.get(`${API_URL}/summary/daily/${date}`);
+    return this.axiosInstance.get(`/summary/daily/${date}`);
   }
 
   createMonthlySummary() {
-    return this.axiosInstance.post(`${API_URL}/summary/monthly/create`);
+    return this.axiosInstance.post('/summary/monthly/create');
   }
 
   getMonthlySummary(month) {
-    return this.axiosInstance.get(`${API_URL}/summary/monthly/${month}`);
+    return this.axiosInstance.get(`/summary/monthly/${month}`);
   }
 
   getAllMonthlySummaries() {
-    return this.axiosInstance.get(`${API_URL}/summary/monthly`);
+    return this.axiosInstance.get('/summary/monthly');
   }
 
   getAvailableDates() {
-    return this.axiosInstance.get(`${API_URL}/summary/available-dates`);
+    return this.axiosInstance.get('/summary/available-dates');
   }
 
   // ==================== CATEGORIES ====================
-  
+
   getCategories() {
     return this.axiosInstance.get('/categories');
   }
