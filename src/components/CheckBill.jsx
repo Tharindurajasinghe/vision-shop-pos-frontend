@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import LoadingOverlay from './LoadingOverlay';
 
 const CheckBill = () => {
   const [billId, setBillId] = useState('');
@@ -8,10 +9,18 @@ const CheckBill = () => {
   const [bills, setBills] = useState([]);
   const [selectedBill, setSelectedBill] = useState(null);
   const [showBillDetails, setShowBillDetails] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [deletingBill, setDeletingBill] = useState(false);
 
   useEffect(() => {
-    loadAvailableDates();
-    loadTodayBills();
+    const initialLoad = async () => {
+      try {
+        await Promise.all([loadAvailableDates(), loadTodayBills()]);
+      } finally {
+        setPageLoading(false);
+      }
+    };
+    initialLoad();
   }, []);
 
   const loadAvailableDates = async () => {
@@ -77,6 +86,7 @@ const CheckBill = () => {
     );
     if (!confirmDelete) return;
 
+    setDeletingBill(true);
     try {
       await api.deleteBill(selectedBill.billId);
       alert(`Bill #${selectedBill.billId} deleted successfully`);
@@ -88,11 +98,15 @@ const CheckBill = () => {
       }
     } catch (error) {
       alert(error.response?.data?.message || 'Error deleting bill');
+    } finally {
+      setDeletingBill(false);
     }
   };
 
   return (
     <div className="grid grid-cols-2 gap-6">
+      {pageLoading && <LoadingOverlay message="Loading bills..." />}
+      {deletingBill && <LoadingOverlay message="Removing bill..." />}
       {/* Left Panel: Bill Search */}
       <div className="bg-white p-6 rounded-lg shadow">
         <h2 className="text-2xl font-bold mb-6">Check Bill</h2>

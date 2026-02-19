@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import MonthSummary from './MonthSummary';
 import SummaryTable from './SummaryTable';
+import LoadingOverlay from './LoadingOverlay';
 
 const Summary = () => {
   const [viewType, setViewType] = useState('daily');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [dailySummary, setDailySummary] = useState(null);
-  
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     if (viewType === 'daily') {
       loadDailySummary();
@@ -15,16 +17,21 @@ const Summary = () => {
   }, [selectedDate, viewType]);
 
   const loadDailySummary = async () => {
+    setLoading(true);
     try {
       const response = await api.getDailySummary(selectedDate);
       setDailySummary(response.data);
     } catch (error) {
       setDailySummary(null);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="bg-white p-6 rounded-lg shadow">
+      {loading && <LoadingOverlay message="Loading summary..." />}
+
       <h2 className="text-2xl font-bold mb-6">Summary</h2>
 
       <div className="mb-6 flex gap-4">
@@ -68,7 +75,7 @@ const Summary = () => {
                 <h3 className="text-lg font-bold mb-4">
                   Daily Summary - {new Date(dailySummary.date).toLocaleDateString()}
                 </h3>
-                
+
                 <SummaryTable items={dailySummary.items} />
 
                 <div className="bg-green-50 p-6 rounded-lg">
@@ -98,9 +105,7 @@ const Summary = () => {
         </div>
       ) : (
         <div>
-
-        {viewType === 'monthly' && <MonthSummary />}
-
+          {viewType === 'monthly' && <MonthSummary />}
         </div>
       )}
     </div>

@@ -17,6 +17,7 @@ const StoreManagement = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
+  const [pageLoading, setPageLoading] = useState(true);
   const searchTimeoutRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -30,8 +31,14 @@ const StoreManagement = () => {
   });
 
   useEffect(() => {
-    loadProducts();
-    loadCategories();
+    const initialLoad = async () => {
+      try {
+        await Promise.all([loadProducts(), loadCategories()]);
+      } finally {
+        setPageLoading(false);
+      }
+    };
+    initialLoad();
   }, []);
 
   useEffect(() => {
@@ -131,6 +138,7 @@ const StoreManagement = () => {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow">
+      {pageLoading && <LoadingOverlay message="Loading products..." />}
       {loading && <LoadingOverlay message={loadingMessage} />}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Store Management</h2>
