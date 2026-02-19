@@ -9,7 +9,8 @@ const API_URL = import.meta.env.VITE_BACKEND_URL;
 class APIService {
   constructor() {
     this.axiosInstance = axios.create({
-      baseURL: API_URL
+      baseURL: API_URL,
+      timeout: 60000
     });
 
     this.setupInterceptors();
