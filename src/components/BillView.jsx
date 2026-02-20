@@ -8,12 +8,12 @@ export const getBillHTML = (bill) => {
       <title>Bill ${bill.billId}</title>
       <style>
         @media print {
-          @page { size: 55mm auto; margin: 0; }
+          @page { size: 80mm auto; margin: 0; }
         }
           
         body {
           font-family: 'Courier New', monospace;
-          width: 160px;
+          width: 220px;
           margin: 0 auto;
           padding: 5px;
           font-size: 10px;
@@ -21,7 +21,7 @@ export const getBillHTML = (bill) => {
         .header { text-align: center; }
         .separator { border-top: 1px dashed #000; margin: 8px 0; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { font-size: 11px; padding: 4px 0; }
+        th, td { font-size: 11px; padding: 10px 0; }
         th { border-bottom: 1px solid #000; }
         .right { text-align: right; }
         .variant-info {
