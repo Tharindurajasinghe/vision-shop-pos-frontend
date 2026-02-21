@@ -109,13 +109,6 @@ const DayEndSummary = ({ data, onLogout }) => {
 
         <div className="flex gap-4">
           <button
-            onClick={handleMakeMonthSummary}
-            className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-semibold"
-            disabled={loading}
-          >
-            Make Month Summary
-          </button>
-          <button
             onClick={handleSaveAndEnd}
             className="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 font-semibold"
             disabled={loading}
