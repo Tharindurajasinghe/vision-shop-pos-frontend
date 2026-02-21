@@ -11,6 +11,7 @@ const CheckBill = () => {
   const [showBillDetails, setShowBillDetails] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [deletingBill, setDeletingBill] = useState(false);
+  const [searching, setSearching] = useState(false);
 
   useEffect(() => {
     const initialLoad = async () => {
@@ -46,18 +47,21 @@ const CheckBill = () => {
       alert('Please enter a bill ID');
       return;
     }
-
+    setSearching(true);
     try {
       const response = await api.getBill(billId);
       setSelectedBill(response.data);
       setShowBillDetails(true);
     } catch (error) {
       alert('Bill not found');
+    } finally {
+      setSearching(false);
     }
   };
 
   const searchBillsByDate = async (date) => {
     setSelectedDate(date);
+    setSearching(true);
     try {
       const response = await api.getBillsByDate(date);
       setBills(response.data);
@@ -65,16 +69,21 @@ const CheckBill = () => {
     } catch (error) {
       console.error('Error loading bills:', error);
       setBills([]);
+    } finally {
+      setSearching(false);
     }
   };
 
   const handleBillClick = async (billId) => {
+    setSearching(true);
     try {
       const response = await api.getBill(billId);
       setSelectedBill(response.data);
       setShowBillDetails(true);
     } catch (error) {
       alert('Error loading bill details');
+    } finally {
+      setSearching(false);
     }
   };
 
@@ -107,6 +116,7 @@ const CheckBill = () => {
     <div className="grid grid-cols-2 gap-6">
       {pageLoading && <LoadingOverlay message="Loading bills..." />}
       {deletingBill && <LoadingOverlay message="Removing bill..." />}
+      {searching && <LoadingOverlay message="Searching..." />}
       {/* Left Panel: Bill Search */}
       <div className="bg-white p-6 rounded-lg shadow">
         <h2 className="text-2xl font-bold mb-6">Check Bill</h2>
